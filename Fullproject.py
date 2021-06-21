@@ -10,8 +10,6 @@ import matplotlib.pyplot as plt
 import math
 #           GERANDO O BANCO DE DADOS
 
-AUEI
-
 def DampedPend(b,k,t,m):
     if t==0:
         position=1
@@ -24,8 +22,13 @@ def DampedPend(b,k,t,m):
     return position
 def Box_1_dataset_with_Constants(n_batch,batch_size,exemplos_por_batch):
     inp=[];    question=[];    m=1
-    T=[i for i in range(0,50)]
-    K=np.linspace(5, 11, num=50)
+    T=[i for i in range(0,20)]
+    omega=np.linspace(0, 2, num=20)*np.pi
+    time=np.linspace(0, 2, num=20)
+
+    K=np.cos(K)
+    print(K)
+    s.exit()
     B=np.linspace(0.5, 1.1, num=50)
     KK=[];    BB=[]
 #    K=np.linspace(5, 11, num=100)          #those are default values
@@ -77,7 +80,7 @@ Box_1_dataset_with_Constants(5,1000,50)
 #s.exit()
 #mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
 #-----------------------------------------------------------------------
-#------------------LOAD DATA-----------------------------------------------------
+#-----------------LOAD DATA-----------------------------------------------------
 #-----------------------------------------------------------------------
 inp = pickle.load( open( "positions", "rb" ) )
 question= pickle.load( open( "question", "rb" ) )
@@ -98,7 +101,7 @@ n_examples=np.shape(inp)[2]
 #s.exit()
 #-----------------------------------------------------------------------
 
-#------------------ORGANIZE DATA-----------------------------------------------------
+#------------------ORGANIZE DATA------------------------------------------------
 #-----------------------------------------------------------------------
 #plt.plot(question[1][0].detach().numpy(),out[2][0].detach().numpy())
 #plt.show()
@@ -209,7 +212,6 @@ def treine(epochs):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-
         #if indicedografico==3:
         #    Y=np.zeros(50);        T=[i for i in range(0,50)]
         #    rdn_batch=rd.randint(0,batch_size)
@@ -230,7 +232,7 @@ def treine(epochs):
         #    plt.pause(0.03)
         #    #plt.close()
         #indicedografico+=1
-        print(f'Epoch:{epoch+1},Loss:{loss.item():.4f}')
+        #print(f'Epoch:{epoch+1},Loss:{loss.item():.4f}')
         #outputs.append((epoch,inputs,recon))
 
 #    plt.show()
@@ -370,5 +372,4 @@ def Latent_values_Scynet_html_graph():
     #plt.legend()
 Latent_values_Scynet_html_graph()
 s.exit()
-
 print('wtf')
