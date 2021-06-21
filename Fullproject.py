@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 import math
 #           GERANDO O BANCO DE DADOS
 
+AUEI
+
 def DampedPend(b,k,t,m):
     if t==0:
         position=1
