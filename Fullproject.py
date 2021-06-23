@@ -9,26 +9,32 @@ import numpy as np;import sys as s
 import matplotlib.pyplot as plt
 import math
 #           GERANDO O BANCO DE DADOS
-
-def DampedPend(b,k,t,m):
-    if t==0:
-        position=1
-    else:
-        dump=math.exp(-(b/2*m)*t)
-        omega=np.sqrt(k/m)*np.sqrt(1-(b**2)/(4*m*k))
-        osc=np.cos(omega*t)
-        position = dump*osc
-    #   osc=1*np.cos((np.sqrt(k/m)*np.sqrt(1-(b**2)/(m*4*k))))*t)
-    return position
 def Box_1_dataset_with_Constants(n_batch,batch_size,exemplos_por_batch):
     inp=[];    question=[];    m=1
     T=[i for i in range(0,20)]
-    omega=np.linspace(0, 2, num=20)*np.pi
-    time=np.linspace(0, 2, num=20)
-
-    K=np.cos(K)
-    print(K)
+    v_min,v_max=5,15
+    omega_f=np.zeros(5)
+    omega_0=np.linspace(v_min,v_max,num=5)
+    v_0=np.linspace(v_min,v_max,num=5)
+    r=rd.randint(0,len(v_0)-1)
+    q_free=[i*v_0[r]for i in range(0,5)]
+    print(q_free)
     s.exit()
+    #q_rot=[i+v_0[0]for i in ]
+    for i in range(0,10):
+    #    aux=J[rd.randint(0,len(J)-1)]
+    #    print(aux)
+        r=rd.randint(0,len(v_0)-1)
+        print(r)
+        print(v_0[r])
+        omega_f[i]=omega_0[i]-v_0[i]+v_0[r]
+        print(omega_f)
+    print(omega_f[i])
+    K=np.cos(omega)
+    plt.plot(time,K)
+    plt.show()
+
+    print(K)
     B=np.linspace(0.5, 1.1, num=50)
     KK=[];    BB=[]
 #    K=np.linspace(5, 11, num=100)          #those are default values
