@@ -18,13 +18,13 @@ def Box_2_dataset_O(n_batch,batch_size,interval_size):
         v_rand1=rd.randint(len(velocidades)/2,len(velocidades)-1)
         v_rand2=rd.randint(0,len(velocidades)-1-len(velocidades)/2)
         J1=velocidades[v_rand1]-velocidades[v_rand2]
-        print('J1 = ',J1)
+        #print('J1 = ',J1)
         random_list=np.linspace(0,J1,num=20)
         aux_rand=rd.randint(0,len(random_list)-1)
         v_free_f=random_list[aux_rand]
         v_rot_f=J1-v_free_f
-        print('v_free_f = ',v_free_f)
-        print('v_rot_f = ',v_rot_f)
+        #print('v_free_f = ',v_free_f)
+        #print('v_rot_f = ',v_rot_f)
         #s.exit()
         q_rot_i   = [velocidades[v_rand2]*(len(T)-i-1) for i in T]
         q_free_i  = [-velocidades[v_rand1]*(len(T)-i-1) for i in T]
@@ -44,8 +44,12 @@ def Box_2_dataset_O(n_batch,batch_size,interval_size):
         #print('o = ',o)
 
         O.append(o)
+    #    return O
+    O=np.array(O).reshape(n_batch,batch_size,interval_size*4)
     print(np.shape(O))
-Box_2_dataset_O(5,10,5)
+    return O
+O=Box_2_dataset_O(5,10,5)
+print(O[0][0])
 
 s.exit()
 def Box_2_dataset_with_Constants(n_batch,batch_size,exemplos_por_batch):

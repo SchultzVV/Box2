@@ -6,7 +6,7 @@ from matplotlib import cm
 import torch.optim as optim
 import matplotlib.pyplot as plt
 import math
-
+#           Função do pêndulo amortecido
 def DampedPend(b,k,t,m):
     if t==0:
         position=1
@@ -15,7 +15,6 @@ def DampedPend(b,k,t,m):
         omega=np.sqrt(k/m)*np.sqrt(1-(b**2)/(4*m*k))
         osc=np.cos(omega*t)
         position = dump*osc
-    #   osc=1*np.cos((np.sqrt(k/m)*np.sqrt(1-(b**2)/(m*4*k))))*t)
     return position
 #   GERANDO O BANCO DE DADOS SORTEANDO K E B NO SEU INTERVALO ESPECÍFICO
 
@@ -25,8 +24,6 @@ def Box_1_dataset_with_Constants(n_batch,batch_size,exemplos_por_batch):
     K=np.linspace(5, 11, num=50)
     B=np.linspace(0.5, 1.1, num=50)
     KK=[];    BB=[]
-#    K=np.linspace(5, 11, num=100)          #those are default values
-#    B=np.linspace(0.5,1.1, num=100)        #those are default values
 #'''         THIS IS FOR A RANDOM CONFIG OF K AND B'''
     for i in range(n_batch):
         t=[];        position=[];        full=0
@@ -39,11 +36,11 @@ def Box_1_dataset_with_Constants(n_batch,batch_size,exemplos_por_batch):
                 yy=DampedPend(b,k,l,m)
                 y.append(yy)
                 tpred.append(l)
-#            plt.clf()                   #uncoment to graph
-#            plt.xlim([0, 50])           #uncoment to graph
-#            plt.ylim([-1, 1])           #uncoment to graph
-#            plt.plot(tpred,y)           #uncoment to graph
-#            plt.pause(0.5)              #uncoment to graph
+##            plt.clf()                   #uncoment to graph
+##            plt.xlim([0, 10])           #uncoment to graph
+##            plt.ylim([-1, 1])           #uncoment to graph
+##            plt.plot(tpred,y)           #uncoment to graph
+##            plt.pause(0.5)              #uncoment to graph
 
             t.append(tpred)
             position.append(y)
@@ -51,26 +48,26 @@ def Box_1_dataset_with_Constants(n_batch,batch_size,exemplos_por_batch):
         inp.append(position)
         question.append(t)
 #        sys.exit()
+    plt.show()
     KK=np.array(KK).reshape(n_batch,batch_size,1)   # To works on scynet
     BB=np.array(BB).reshape(n_batch,batch_size,1)   # To works on scynet
     Constantes=[KK,BB]
 #    print(np.shape(Constantes))
-#    sys.exit()
     inp=torch.as_tensor(inp)
     question=torch.as_tensor(question)
-#    plt.show()
+    sys.exit()
     print('shape(question) =',np.shape(question))
+    print('Constantes =',np.shape(Constantes))
     address = open("positions","wb")
     pickle.dump(inp, address)
     address.close()
     address = open("question","wb")
     pickle.dump(question, address)
     address.close()
-    print('Constantes =',np.shape(Constantes))
     address = open("Constantes","wb")
     pickle.dump(Constantes, address)
     address.close()
-Box_1_dataset_with_Constants(5,1000,50)
+##Box_1_dataset_with_Constants(5,1000,50)
 #s.exit()
 #-----------------------------------------------------------------------
 #------------------LOAD DATA-----------------------------------------------------
@@ -107,17 +104,6 @@ n_examples=np.shape(inp)[2]
 #plt.show()
 #s.exit()
 train_loader = torch.utils.data.DataLoader(inp, batch_size=batch_size)
-#inp=torch.as_tensor(inp)
-#out=torch.as_tensor(out)
-#question=torch.as_tensor(question)
-#s.exit()
-#-------------------------------------------------------------------------------
-#------------------DEFINE O MODELO----------------------------------------------
-#-------------------------------------------------------------------------------
-# Checar os dados dos inputs estão variando e não sendo os mesmos.
-# Aumentar o número de neurônios das camadas ocultas.
-# Ou mudar para uma arquitetura variacional.
-#-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #------------------DEFINE O MODELO----------------------------------------------
 #-------------------------------------------------------------------------------
@@ -199,8 +185,6 @@ def Predict_test_Scynet():
     t=torch.as_tensor(np.zeros((batch_size,1)))
     t=t.float()
     Y=np.zeros(50);        T=[i for i in range(0,50)]
-    #rdn_batch=rd.randint(0,batch_size)
-    #aux=[i for i in range(0,n_batch)]
     for aux in range(0,n_batch):
         for rdn_batch in range(0,batch_size):
             YY=inp[aux][rdn_batch].detach().numpy()
@@ -209,23 +193,16 @@ def Predict_test_Scynet():
                 for i in range(batch_size):
                     t[i][0]=question[0,i,r]
                 y,latent=model(inp[aux].float(),t)
-                #y=y.detach.numpy()[rdn_batch]
                 y=y.detach().numpy()[rdn_batch]
                 Y[interval]=y
                 r+=1
-            #print(np.shape(YY))
-            #print(np.shape(Y))
-            #s.exit()
             plt.clf()
             plt.xlim([0, 50])
             plt.ylim([-1, 1])
             plt.plot(T,Y,label='predict',ls='dashed')
             plt.plot(T,YY,label='equation')
-            #plt.scatter(T, Y,c='black',label='recon')
-            #plt.scatter(T, YY,c='red',label='answ')
             plt.legend()
             plt.pause(0.03)
-            #plt.close()
     plt.show()
-Predict_test_Scynet()
-sys.exit()
+##Predict_test_Scynet()
+#sys.exit()
