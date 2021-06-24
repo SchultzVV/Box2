@@ -9,17 +9,89 @@ import numpy as np;import sys as s
 import matplotlib.pyplot as plt
 import math
 #           GERANDO O BANCO DE DADOS
-def Box_1_dataset_with_Constants(n_batch,batch_size,exemplos_por_batch):
+def Box_2_dataset_O(n_batch,batch_size,interval_size):
+    T=[i for i in range(0,interval_size)]
+    O=[]
+    v_min,v_max=5,40
+    velocidades=np.linspace(v_min,v_max,num=100)
+    for i in range(n_batch*batch_size):
+        v_rand1=rd.randint(len(velocidades)/2,len(velocidades)-1)
+        v_rand2=rd.randint(0,len(velocidades)-1-len(velocidades)/2)
+        J1=velocidades[v_rand1]-velocidades[v_rand2]
+        print('J1 = ',J1)
+        random_list=np.linspace(0,J1,num=20)
+        aux_rand=rd.randint(0,len(random_list)-1)
+        v_free_f=random_list[aux_rand]
+        v_rot_f=J1-v_free_f
+        print('v_free_f = ',v_free_f)
+        print('v_rot_f = ',v_rot_f)
+        #s.exit()
+        q_rot_i   = [velocidades[v_rand2]*(len(T)-i-1) for i in T]
+        q_free_i  = [-velocidades[v_rand1]*(len(T)-i-1) for i in T]
+        q_free_f  = [v_free_f*(i) for i in T]
+        q_rot_f   = [v_rot_f*(i) for i in T]
+        #q_rot_i[len(q_rot_i)-1],q_free_i[len(q_free_i)-1]=0,0
+        o=[];    a=0
+        for i in q_rot_i:
+            o.append(T[a])
+            a+=1
+            o.append(i)
+        a=0
+        for i in q_free_i:
+            o.append(T[a])
+            a+=1
+            o.append(i)
+        #print('o = ',o)
+
+        O.append(o)
+    print(np.shape(O))
+Box_2_dataset_O(5,10,5)
+
+s.exit()
+def Box_2_dataset_with_Constants(n_batch,batch_size,exemplos_por_batch):
     inp=[];    question=[];    m=1
-    T=[i for i in range(0,20)]
-    v_min,v_max=5,15
+    T=[i for i in range(0,5)]
+    v_min,v_max=5,40
+    velocidades=np.linspace(v_min,v_max,num=100)
+    v_rand1=rd.randint(len(velocidades)/2,len(velocidades)-1)
+    v_rand2=rd.randint(0,len(velocidades)-1-len(velocidades)/2)
+#    print('velocidades[v_rand1] = ',velocidades[v_rand1])
+#    print('velocidades[v_rand2] = ',velocidades[v_rand2])
+    J1=velocidades[v_rand1]-velocidades[v_rand2]
+    print('J1 = ',J1)
+    random_list=np.linspace(0,J1,num=20)
+    aux_rand=rd.randint(0,len(random_list)-1)
+    v_free_f=random_list[aux_rand]
+    #print(aux_rand)
+    v_rot_f=J1-v_free_f
+    print('v_free_f = ',v_free_f)
+    print('v_rot_f = ',v_rot_f)
+    #s.exit()
+    q_rot_i   = [velocidades[v_rand2]*(len(T)-i-1) for i in T]
+    q_free_i  = [-velocidades[v_rand1]*(len(T)-i-1) for i in T]
+    q_free_f  = [v_free_f*(i) for i in T]
+    q_rot_f   = [v_rot_f*(i) for i in T]
+    #q_rot_i[len(q_rot_i)-1],q_free_i[len(q_free_i)-1]=0,0
+    o=[];    a=0
+    for i in q_rot_i:
+        o.append(T[a])
+        a+=1
+        o.append(i)
+    a=0
+    for i in q_free_i:
+        o.append(T[a])
+        a+=1
+        o.append(i)
+    print('o = ',o)
+    print('q_free_i = ',q_free_i)
+    print('q_rot_i = ',q_rot_i)
+    print('q_free_f = ',q_free_f)
+    print('q_rot_f = ',q_rot_f)
+    s.exit()
     omega_f=np.zeros(5)
-    omega_0=np.linspace(v_min,v_max,num=5)
     v_0=np.linspace(v_min,v_max,num=5)
-    r=rd.randint(0,len(v_0)-1)
     q_free=[i*v_0[r]for i in range(0,5)]
     print(q_free)
-    s.exit()
     #q_rot=[i+v_0[0]for i in ]
     for i in range(0,10):
     #    aux=J[rd.randint(0,len(J)-1)]
@@ -82,7 +154,7 @@ def Box_1_dataset_with_Constants(n_batch,batch_size,exemplos_por_batch):
     address = open("Constantes","wb")
     pickle.dump(Constantes, address)
     address.close()
-Box_1_dataset_with_Constants(5,1000,50)
+Box_2_dataset_with_Constants(5,1000,50)
 #s.exit()
 #mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
 #-----------------------------------------------------------------------
