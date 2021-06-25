@@ -67,15 +67,17 @@ def Box_2_dataset_O(n_batch,batch_size,interval_size):
     O=np.array(O).reshape(n_batch,batch_size,interval_size*4)
     Q=np.array(Q).reshape(n_batch,batch_size,interval_size*2+1)
     A=np.array(A).reshape(n_batch,batch_size,1)
+    J=np.array(J).reshape(n_batch,batch_size,1)
     O=torch.as_tensor(O);    Q=torch.as_tensor(Q);    A=torch.as_tensor(A)
     print('np.shape(J)',np.shape(J));    print('np.shape(O)',np.shape(O))
     print('np.shape(Q)',np.shape(Q));    print('np.shape(A)',np.shape(A))
+#    s.exit()
     address = open("O","wb");    pickle.dump(O, address);    address.close()
     address = open("Q","wb");    pickle.dump(Q, address);    address.close()
     address = open("A","wb");    pickle.dump(A, address);    address.close()
     address = open("J","wb");    pickle.dump(J, address);    address.close()
 
-#Box_2_dataset_O(5,500,5)
+Box_2_dataset_O(5,500,5)
 #s.exit()
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -83,12 +85,14 @@ def Box_2_dataset_O(n_batch,batch_size,interval_size):
 #-------------------------------------------------------------------------------
 #-----------------LOAD DATA-----------------------------------------------------
 #-------------------------------------------------------------------------------
-inp = pickle.load( open( "O", "rb" ) )
-question= pickle.load( open( "Q", "rb" ) )
-out =  pickle.load( open( "A", "rb" ) )
+inp = pickle.load(open("O","rb"))
+question= pickle.load(open("Q","rb"))
+out =  pickle.load(open("A","rb"))
+J = pickle.load(open("J","rb"))
 n_batch=np.shape(inp)[0]
 batch_size=np.shape(inp)[1]
 n_examples=np.shape(inp)[2]
+J=np.array(J).reshape(n_batch,batch_size,1)
 Q_shape=np.shape(question)
 Constantes =  pickle.load( open( "Constantes", "rb" ) )
 K=Constantes[0];B=Constantes[1]
@@ -130,7 +134,7 @@ class Autoencoder(nn.Module):
             #nn.ELU(),
             #nn.ReLU(),
             nn.Tanh(),
-            nn.Linear(200,1),#> latent
+            nn.Linear(200,10),#> latent
             #nn.ELU(),
             #nn.ReLU(),
             nn.Tanh(),
@@ -140,11 +144,11 @@ class Autoencoder(nn.Module):
             #nn.Tanh(),
             #nn.Linear(25,10),
         )
-        self.project=nn.Linear(Q_shape[2],1)
+        self.project=nn.Linear(Q_shape[2],4)
         self.decoder=nn.Sequential(
             #nn.Tanh(),
             #nn.ReLU(),
-            nn.Linear(Q_shape[2]+1,100),
+            nn.Linear(14,100),
             #nn.ELU(),
             nn.Tanh(),
             #nn.ReLU(),
@@ -157,7 +161,7 @@ class Autoencoder(nn.Module):
             #nn.ReLU(),
             nn.Tanh(),
             nn.Linear(450,50),
-            #nn.ELU(),                    
+            #nn.ELU(),
             #nn.ReLU(),
             nn.Tanh(),
             nn.Linear(50,1),
@@ -166,10 +170,10 @@ class Autoencoder(nn.Module):
     def forward(self, x, t):
         encoded = self.encoder(x)
         t=self.project(t)
-        print(np.shape(t))
-        print(np.shape(encoded))
+        #print(np.shape(t))
+        #print(np.shape(encoded))
         aux=torch.cat((encoded,t),1)
-        print(np.shape(aux))
+        #print(np.shape(aux))
         decoded = self.decoder(aux)
         return decoded,encoded
 
@@ -195,12 +199,11 @@ def treine(epochs):
     batch_size=np.shape(inp)[1]
     n_examples=np.shape(inp)[2]
     Q_shape=np.shape(question)
-    t=torch.as_tensor(np.zeros((batch_size,1)))
     answ=torch.as_tensor(np.zeros((batch_size,1)))
     indicedografico=0
     for epoch in range(epochs):
         for batch_idx in range(n_batch):
-            O = inp[batch_idx]
+            O=inp[batch_idx]
             Q=question[batch_idx]
             A=out[batch_idx]
             O=O.float()
@@ -208,7 +211,10 @@ def treine(epochs):
             A=A.float()
             #recon = model(inputs,question[0][:][r])
             #loss=torch.mean((recon-out[batch_idx][:][r])**2)
+            #print(np.shape(Q))
+            #s.exit()
             recon,latent = model(O,Q)
+
             loss=torch.mean((recon-A)**2)
             optimizer.zero_grad()
             loss.backward()
@@ -237,70 +243,26 @@ def treine(epochs):
         #outputs.append((epoch,inputs,recon))
 
 #    plt.show()
-treine(10000)
-print('end')
+#treine(1000)
+#print('end')
 #--------------------------------------------------------------------------
 #---------------------TENTANDO SALVAR--------------------------------------
 #--------------------------------------------------------------------------
-PATH_save='Estado_talvez_funcionante5.pt'
-PATH_load='Estado_talvez_funcionante4.pt'
-#torch.save(model.state_dict(), PATH_save)
-
+PATH_save='Estado_Box_2.pt'
+PATH_load='Estado_Box_2.pt'
 model.load_state_dict(torch.load(PATH_load))
-
+treine(300)
+torch.save(model.state_dict(), PATH_save)
+s.exit()
 #--------------------------------------------------------------------------
 #---------------------GRÁFICOS---------------------------------------------
 #--------------------------------------------------------------------------
-def Predict_test_Scynet():
-    t=torch.as_tensor(np.zeros((batch_size,1)))
-    t=t.float()
-    Y=np.zeros(50);        T=[i for i in range(0,50)]
-    #rdn_batch=rd.randint(0,batch_size)
-    #aux=[i for i in range(0,n_batch)]
-    for aux in range(0,n_batch):
-        for rdn_batch in range(0,batch_size):
-            YY=inp[aux][rdn_batch].detach().numpy()
-            r=0
-            for interval in range(0,49):
-                for i in range(batch_size):
-                    t[i][0]=question[0,i,r]
-                y,latent=model(inp[aux].float(),t)
-                #y=y.detach.numpy()[rdn_batch]
-                y=y.detach().numpy()[rdn_batch]
-                Y[interval]=y
-                r+=1
-            #print(np.shape(YY))
-            #print(np.shape(Y))
-            #s.exit()
-            plt.clf()
-            plt.xlim([0, 50])
-            plt.ylim([-1, 1])
-            plt.plot(T,Y,label='predict',ls='dashed')
-            plt.plot(T,YY,label='equation')
-            #plt.scatter(T, Y,c='black',label='recon')
-            #plt.scatter(T, YY,c='red',label='answ')
-            plt.legend()
-            plt.pause(0.03)
-            #plt.close()
-    plt.show()
-#Predict_test_Scynet()
-#s.exit()
 #--------------------------------------------------------------------------
 def Latent_values_Scynet():
-    fig = plt.figure(figsize=plt.figaspect(0.5))
-    ax1 = fig.add_subplot(1, 3, 1, projection='3d')
-    ax2 = fig.add_subplot(1, 3, 2, projection='3d')
-    ax3 = fig.add_subplot(1, 3, 3, projection='3d')
-    t=torch.as_tensor(np.zeros((batch_size,1)))
-    t=t.float()
-    r=25 # tempo escolhido para a pergunta da rede neural
-    for i in range(batch_size):
-        t[i][0]=question[0,i,r]
-    L1,L2,L3=np.zeros(batch_size),np.zeros(batch_size),np.zeros(batch_size)
-    Y=np.zeros(50);        T=[i for i in range(0,50)]
-    ks=[]
-    bs=[]
-    for aux in range(1,2):#n_batch):
+    for aux in range(1,n_batch):
+        O=inp[aux].float()
+        Q=question[aux].float()
+        A=out[aux].float()
         for rdn_batch in range(0,batch_size):
             recon,latent=model(inp[aux].float(),t)
             L1[rdn_batch] = latent[rdn_batch][0].detach().numpy()
