@@ -9,15 +9,20 @@ import numpy as np;import sys as s
 import matplotlib.pyplot as plt
 import math
 #           GERANDO O BANCO DE DADOS
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def Box_2_dataset_O(n_batch,batch_size,interval_size):
     T=[i for i in range(0,interval_size)]
-    O=[]
+    O=[];    Q=[];    A=[];    J=[]
     v_min,v_max=5,40
     velocidades=np.linspace(v_min,v_max,num=100)
     for i in range(n_batch*batch_size):
         v_rand1=rd.randint(len(velocidades)/2,len(velocidades)-1)
         v_rand2=rd.randint(0,len(velocidades)-1-len(velocidades)/2)
+        v_free_i=velocidades[v_rand1]
+        v_rot_i=velocidades[v_rand2]
         J1=velocidades[v_rand1]-velocidades[v_rand2]
+        J.append(J1)
         #print('J1 = ',J1)
         random_list=np.linspace(0,J1,num=20)
         aux_rand=rd.randint(0,len(random_list)-1)
@@ -25,12 +30,29 @@ def Box_2_dataset_O(n_batch,batch_size,interval_size):
         v_rot_f=J1-v_free_f
         #print('v_free_f = ',v_free_f)
         #print('v_rot_f = ',v_rot_f)
-        #s.exit()
         q_rot_i   = [velocidades[v_rand2]*(len(T)-i-1) for i in T]
         q_free_i  = [-velocidades[v_rand1]*(len(T)-i-1) for i in T]
         q_free_f  = [v_free_f*(i) for i in T]
         q_rot_f   = [v_rot_f*(i) for i in T]
-        #q_rot_i[len(q_rot_i)-1],q_free_i[len(q_free_i)-1]=0,0
+        #print('v_free_i = ',v_free_i)
+        #print('v_rot_i = ',v_rot_i)
+        #print('J1 = ',J1)
+        #print('v_free_f = ',v_free_f)
+        #print('v_rot_f = ',v_rot_f)
+        #print('q_free_i = ',q_free_i)
+        #print('q_rot_i = ',q_rot_i)
+        #print('q_free_f = ',q_free_f)
+        #print('q_rot_f = ',q_rot_f)
+        tpred=rd.randint(0,interval_size-1)
+        q=[tpred]
+        a=0
+        for i in q_free_f:
+            q.append(T[a])
+            a+=1
+            q.append(i)
+        Q.append(q)
+        a=[q_rot_f[tpred]]
+        A.append(a)
         o=[];    a=0
         for i in q_rot_i:
             o.append(T[a])
@@ -41,137 +63,35 @@ def Box_2_dataset_O(n_batch,batch_size,interval_size):
             o.append(T[a])
             a+=1
             o.append(i)
-        #print('o = ',o)
-
         O.append(o)
-    #    return O
     O=np.array(O).reshape(n_batch,batch_size,interval_size*4)
-    print(np.shape(O))
-    return O
-O=Box_2_dataset_O(5,10,5)
-print(O[0][0])
+    Q=np.array(Q).reshape(n_batch,batch_size,interval_size*2+1)
+    A=np.array(A).reshape(n_batch,batch_size,1)
+    O=torch.as_tensor(O);    Q=torch.as_tensor(Q);    A=torch.as_tensor(A)
+    print('np.shape(J)',np.shape(J));    print('np.shape(O)',np.shape(O))
+    print('np.shape(Q)',np.shape(Q));    print('np.shape(A)',np.shape(A))
+    address = open("O","wb");    pickle.dump(O, address);    address.close()
+    address = open("Q","wb");    pickle.dump(Q, address);    address.close()
+    address = open("A","wb");    pickle.dump(A, address);    address.close()
+    address = open("J","wb");    pickle.dump(J, address);    address.close()
 
-s.exit()
-def Box_2_dataset_with_Constants(n_batch,batch_size,exemplos_por_batch):
-    inp=[];    question=[];    m=1
-    T=[i for i in range(0,5)]
-    v_min,v_max=5,40
-    velocidades=np.linspace(v_min,v_max,num=100)
-    v_rand1=rd.randint(len(velocidades)/2,len(velocidades)-1)
-    v_rand2=rd.randint(0,len(velocidades)-1-len(velocidades)/2)
-#    print('velocidades[v_rand1] = ',velocidades[v_rand1])
-#    print('velocidades[v_rand2] = ',velocidades[v_rand2])
-    J1=velocidades[v_rand1]-velocidades[v_rand2]
-    print('J1 = ',J1)
-    random_list=np.linspace(0,J1,num=20)
-    aux_rand=rd.randint(0,len(random_list)-1)
-    v_free_f=random_list[aux_rand]
-    #print(aux_rand)
-    v_rot_f=J1-v_free_f
-    print('v_free_f = ',v_free_f)
-    print('v_rot_f = ',v_rot_f)
-    #s.exit()
-    q_rot_i   = [velocidades[v_rand2]*(len(T)-i-1) for i in T]
-    q_free_i  = [-velocidades[v_rand1]*(len(T)-i-1) for i in T]
-    q_free_f  = [v_free_f*(i) for i in T]
-    q_rot_f   = [v_rot_f*(i) for i in T]
-    #q_rot_i[len(q_rot_i)-1],q_free_i[len(q_free_i)-1]=0,0
-    o=[];    a=0
-    for i in q_rot_i:
-        o.append(T[a])
-        a+=1
-        o.append(i)
-    a=0
-    for i in q_free_i:
-        o.append(T[a])
-        a+=1
-        o.append(i)
-    print('o = ',o)
-    print('q_free_i = ',q_free_i)
-    print('q_rot_i = ',q_rot_i)
-    print('q_free_f = ',q_free_f)
-    print('q_rot_f = ',q_rot_f)
-    s.exit()
-    omega_f=np.zeros(5)
-    v_0=np.linspace(v_min,v_max,num=5)
-    q_free=[i*v_0[r]for i in range(0,5)]
-    print(q_free)
-    #q_rot=[i+v_0[0]for i in ]
-    for i in range(0,10):
-    #    aux=J[rd.randint(0,len(J)-1)]
-    #    print(aux)
-        r=rd.randint(0,len(v_0)-1)
-        print(r)
-        print(v_0[r])
-        omega_f[i]=omega_0[i]-v_0[i]+v_0[r]
-        print(omega_f)
-    print(omega_f[i])
-    K=np.cos(omega)
-    plt.plot(time,K)
-    plt.show()
-
-    print(K)
-    B=np.linspace(0.5, 1.1, num=50)
-    KK=[];    BB=[]
-#    K=np.linspace(5, 11, num=100)          #those are default values
-#    B=np.linspace(0.5,1.1, num=100)        #those are default values
-#'''         THIS IS FOR A RANDOM CONFIG OF K AND B'''
-    for i in range(n_batch):
-        t=[];        position=[];        full=0
-        while full!=batch_size:
-            ki=rd.randint(0,49);        bi=rd.randint(0,49)
-            k=K[ki];        b=B[bi]
-            KK.append(k);           BB.append(b)
-            y=[];            tpred=[]
-            for l in T:
-                yy=DampedPend(b,k,l,m)
-                y.append(yy)
-                tpred.append(l)
-#            plt.clf()                   #uncoment to graph
-#            plt.xlim([0, 50])           #uncoment to graph
-#            plt.ylim([-1, 1])           #uncoment to graph
-#            plt.plot(tpred,y)           #uncoment to graph
-#            plt.pause(0.5)              #uncoment to graph
-
-            t.append(tpred)
-            position.append(y)
-            full+=1
-        inp.append(position)
-        question.append(t)
-#        sys.exit()
-    KK=np.array(KK).reshape(n_batch,batch_size,1)   # To works on scynet
-    BB=np.array(BB).reshape(n_batch,batch_size,1)   # To works on scynet
-    Constantes=[KK,BB]
-#    print(np.shape(Constantes))
-#    sys.exit()
-    inp=torch.as_tensor(inp)
-    question=torch.as_tensor(question)
-#    plt.show()
-    print('shape(question) =',np.shape(question))
-    address = open("positions","wb")
-    pickle.dump(inp, address)
-    address.close()
-    address = open("question","wb")
-    pickle.dump(question, address)
-    address.close()
-    print('Constantes =',np.shape(Constantes))
-    address = open("Constantes","wb")
-    pickle.dump(Constantes, address)
-    address.close()
-Box_2_dataset_with_Constants(5,1000,50)
+#Box_2_dataset_O(5,500,5)
 #s.exit()
-#mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+#-------------------------------------------------------------------------------
 #-----------------LOAD DATA-----------------------------------------------------
-#-----------------------------------------------------------------------
-inp = pickle.load( open( "positions", "rb" ) )
-question= pickle.load( open( "question", "rb" ) )
-out =  pickle.load( open( "positions", "rb" ) )
-Constantes =  pickle.load( open( "Constantes", "rb" ) )
-K=Constantes[0];B=Constantes[1]
+#-------------------------------------------------------------------------------
+inp = pickle.load( open( "O", "rb" ) )
+question= pickle.load( open( "Q", "rb" ) )
+out =  pickle.load( open( "A", "rb" ) )
 n_batch=np.shape(inp)[0]
 batch_size=np.shape(inp)[1]
 n_examples=np.shape(inp)[2]
+Q_shape=np.shape(question)
+Constantes =  pickle.load( open( "Constantes", "rb" ) )
+K=Constantes[0];B=Constantes[1]
 #plt.plot(question[1][0].detach().numpy(),out[2][0].detach().numpy())
 #plt.show()
 #inp=inp.reshape(2500,50)
@@ -179,12 +99,13 @@ n_examples=np.shape(inp)[2]
 
 #plt.plot(question[1][0].detach().numpy(),out[2][0].detach().numpy())
 #plt.show()
-#print(np.shape(inp))
+#print(Q_shape[2])
+#print(Q_shape[2]+1)
 #s.exit()
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 #------------------ORGANIZE DATA------------------------------------------------
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #plt.plot(question[1][0].detach().numpy(),out[2][0].detach().numpy())
 #plt.show()
 #s.exit()
@@ -197,7 +118,7 @@ class Autoencoder(nn.Module):
         # N, 50
         super().__init__()
         self.encoder = nn.Sequential(
-            nn.Linear(50,400),
+            nn.Linear(n_examples,400),
             #nn.ELU(),
             #nn.ReLU(),
             nn.Tanh(),
@@ -209,7 +130,7 @@ class Autoencoder(nn.Module):
             #nn.ELU(),
             #nn.ReLU(),
             nn.Tanh(),
-            nn.Linear(200,3),#> latent
+            nn.Linear(200,1),#> latent
             #nn.ELU(),
             #nn.ReLU(),
             nn.Tanh(),
@@ -219,11 +140,11 @@ class Autoencoder(nn.Module):
             #nn.Tanh(),
             #nn.Linear(25,10),
         )
-        self.project=nn.Linear(1,3)
+        self.project=nn.Linear(Q_shape[2],1)
         self.decoder=nn.Sequential(
             #nn.Tanh(),
             #nn.ReLU(),
-            nn.Linear(6,100),
+            nn.Linear(Q_shape[2]+1,100),
             #nn.ELU(),
             nn.Tanh(),
             #nn.ReLU(),
@@ -236,7 +157,7 @@ class Autoencoder(nn.Module):
             #nn.ReLU(),
             nn.Tanh(),
             nn.Linear(450,50),
-            #nn.ELU(),
+            #nn.ELU(),                    
             #nn.ReLU(),
             nn.Tanh(),
             nn.Linear(50,1),
@@ -245,9 +166,10 @@ class Autoencoder(nn.Module):
     def forward(self, x, t):
         encoded = self.encoder(x)
         t=self.project(t)
-        #print(np.shape(t))
-        #print(np.shape(encoded))
+        print(np.shape(t))
+        print(np.shape(encoded))
         aux=torch.cat((encoded,t),1)
+        print(np.shape(aux))
         decoded = self.decoder(aux)
         return decoded,encoded
 
@@ -266,31 +188,28 @@ outputs = []
 #------TREINO DO DECODER MODIFICADO--INP[50]+TPRED >> OUT[1]----------------
 #---------------------------------------------------------------------------
 def treine(epochs):
-    inp = pickle.load( open( "positions", "rb" ) )
-    question= pickle.load( open( "question", "rb" ) )
-    out =  pickle.load( open( "positions", "rb" ) )
+    inp = pickle.load( open( "O", "rb" ) )
+    question= pickle.load( open( "Q", "rb" ) )
+    out =  pickle.load( open( "A", "rb" ) )
     n_batch=np.shape(inp)[0]
     batch_size=np.shape(inp)[1]
     n_examples=np.shape(inp)[2]
-    T=question[0,0]
+    Q_shape=np.shape(question)
     t=torch.as_tensor(np.zeros((batch_size,1)))
     answ=torch.as_tensor(np.zeros((batch_size,1)))
     indicedografico=0
     for epoch in range(epochs):
         for batch_idx in range(n_batch):
-            inputs = inp[batch_idx]
-            inputs=inputs.float()
-            t=t.float()
-            out=out.float()
-            r=rd.randint(0,49)
-            for i in range(batch_size):
-                r=rd.randint(0,49)
-                t[i][0]=question[batch_idx,i,r]
-                answ[i][0]=inp[batch_idx,i,r]
+            O = inp[batch_idx]
+            Q=question[batch_idx]
+            A=out[batch_idx]
+            O=O.float()
+            Q=Q.float()
+            A=A.float()
             #recon = model(inputs,question[0][:][r])
             #loss=torch.mean((recon-out[batch_idx][:][r])**2)
-            recon,latent = model(inputs,t)
-            loss=torch.mean((recon-answ)**2)
+            recon,latent = model(O,Q)
+            loss=torch.mean((recon-A)**2)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -314,12 +233,12 @@ def treine(epochs):
         #    plt.pause(0.03)
         #    #plt.close()
         #indicedografico+=1
-        #print(f'Epoch:{epoch+1},Loss:{loss.item():.4f}')
+        print(f'Epoch:{epoch+1},Loss:{loss.item():.4f}')
         #outputs.append((epoch,inputs,recon))
 
 #    plt.show()
-#treine(10000)
-#print('end')
+treine(10000)
+print('end')
 #--------------------------------------------------------------------------
 #---------------------TENTANDO SALVAR--------------------------------------
 #--------------------------------------------------------------------------
