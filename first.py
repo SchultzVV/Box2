@@ -1,109 +1,99 @@
-import random as rd;import numpy as np;import sys as s;import pickle
 import torch
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import torch.nn as nn
-from mpl_toolkits import mplot3d
-from matplotlib import cm
+import pickle
+import random as rd
 import torch.optim as optim
+import numpy as np;import sys as s
 import matplotlib.pyplot as plt
 import math
-#           Função do pêndulo amortecido
-def DampedPend(b,k,t,m):
-    if t==0:
-        position=1
-    else:
-        dump=math.exp(-(b/2*m)*t)
-        omega=np.sqrt(k/m)*np.sqrt(1-(b**2)/(4*m*k))
-        osc=np.cos(omega*t)
-        position = dump*osc
-    return position
-#   GERANDO O BANCO DE DADOS SORTEANDO K E B NO SEU INTERVALO ESPECÍFICO
-
-def Box_1_dataset_with_Constants(n_batch,batch_size,exemplos_por_batch):
-    inp=[];    question=[];    m=1
-    T=[i for i in range(0,50)]
-    K=np.linspace(5, 11, num=50)
-    B=np.linspace(0.5, 1.1, num=50)
-    KK=[];    BB=[]
-#'''         THIS IS FOR A RANDOM CONFIG OF K AND B'''
-    for i in range(n_batch):
-        t=[];        position=[];        full=0
-        while full!=batch_size:
-            ki=rd.randint(0,49);        bi=rd.randint(0,49)
-            k=K[ki];        b=B[bi]
-            KK.append(k);           BB.append(b)
-            y=[];            tpred=[]
-            for l in T:
-                yy=DampedPend(b,k,l,m)
-                y.append(yy)
-                tpred.append(l)
-##            plt.clf()                   #uncoment to graph
-##            plt.xlim([0, 10])           #uncoment to graph
-##            plt.ylim([-1, 1])           #uncoment to graph
-##            plt.plot(tpred,y)           #uncoment to graph
-##            plt.pause(0.5)              #uncoment to graph
-
-            t.append(tpred)
-            position.append(y)
-            full+=1
-        inp.append(position)
-        question.append(t)
-#        sys.exit()
-    plt.show()
-    KK=np.array(KK).reshape(n_batch,batch_size,1)   # To works on scynet
-    BB=np.array(BB).reshape(n_batch,batch_size,1)   # To works on scynet
-    Constantes=[KK,BB]
-#    print(np.shape(Constantes))
-    inp=torch.as_tensor(inp)
-    question=torch.as_tensor(question)
-    sys.exit()
-    print('shape(question) =',np.shape(question))
-    print('Constantes =',np.shape(Constantes))
-    address = open("positions","wb")
-    pickle.dump(inp, address)
-    address.close()
-    address = open("question","wb")
-    pickle.dump(question, address)
-    address.close()
-    address = open("Constantes","wb")
-    pickle.dump(Constantes, address)
-    address.close()
-##Box_1_dataset_with_Constants(5,1000,50)
+#           GERANDO O BANCO DE DADOS
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+def Box_2_dataset_O(n_batch,batch_size,interval_size):
+    T=[i for i in range(0,interval_size)]
+    O=[];    Q=[];    A=[];    J=[]
+    v_min,v_max=5,40
+    velocidades=np.linspace(v_min,v_max,num=100)
+    for i in range(n_batch*batch_size):
+        v_rand1=rd.randint(len(velocidades)/2,len(velocidades)-1)
+        v_rand2=rd.randint(0,len(velocidades)-1-len(velocidades)/2)
+        v_free_i=velocidades[v_rand1]
+        v_rot_i=velocidades[v_rand2]
+        J1=velocidades[v_rand1]-velocidades[v_rand2]
+        J.append(J1)
+        #print('J1 = ',J1)
+        random_list=np.linspace(0,J1,num=20)
+        aux_rand=rd.randint(0,len(random_list)-1)
+        v_free_f=random_list[aux_rand]
+        v_rot_f=J1-v_free_f
+        #print('v_free_f = ',v_free_f)
+        #print('v_rot_f = ',v_rot_f)
+        q_rot_i   = [velocidades[v_rand2]*(len(T)-i-1) for i in T]
+        q_free_i  = [-velocidades[v_rand1]*(len(T)-i-1) for i in T]
+        q_free_f  = [v_free_f*(i) for i in T]
+        q_rot_f   = [v_rot_f*(i) for i in T]
+        #print('v_free_i = ',v_free_i)
+        #print('v_rot_i = ',v_rot_i)
+        #print('J1 = ',J1)
+        #print('v_free_f = ',v_free_f)
+        #print('v_rot_f = ',v_rot_f)
+        #print('q_free_i = ',q_free_i)
+        #print('q_rot_i = ',q_rot_i)
+        #print('q_free_f = ',q_free_f)
+        #print('q_rot_f = ',q_rot_f)
+        tpred=rd.randint(0,interval_size-1)
+        q=[tpred]
+        a=0
+        for i in q_free_f:
+            q.append(T[a])
+            a+=1
+            q.append(i)
+        Q.append(q)
+        a=[q_rot_f[tpred]]
+        A.append(a)
+        o=[];    a=0
+        for i in q_rot_i:
+            o.append(T[a])
+            a+=1
+            o.append(i)
+        a=0
+        for i in q_free_i:
+            o.append(T[a])
+            a+=1
+            o.append(i)
+        O.append(o)
+    O=np.array(O).reshape(n_batch,batch_size,interval_size*4)
+    Q=np.array(Q).reshape(n_batch,batch_size,interval_size*2+1)
+    A=np.array(A).reshape(n_batch,batch_size,1)
+    J=np.array(J).reshape(n_batch,batch_size,1)
+    O=torch.as_tensor(O);    Q=torch.as_tensor(Q);    A=torch.as_tensor(A)
+    print('np.shape(J)',np.shape(J));    print('np.shape(O)',np.shape(O))
+    print('np.shape(Q)',np.shape(Q));    print('np.shape(A)',np.shape(A))
+#    s.exit()
+    address = open("O","wb");    pickle.dump(O, address);    address.close()
+    address = open("Q","wb");    pickle.dump(Q, address);    address.close()
+    address = open("A","wb");    pickle.dump(A, address);    address.close()
+    address = open("J","wb");    pickle.dump(J, address);    address.close()
+#Box_2_dataset_O(5,500,5)
 #s.exit()
-#-----------------------------------------------------------------------
-#------------------LOAD DATA-----------------------------------------------------
-#-----------------------------------------------------------------------
-inp = pickle.load( open( "positions", "rb" ) )
-question= pickle.load( open( "question", "rb" ) )
-out =  pickle.load( open( "positions", "rb" ) )
-Constantes =  pickle.load( open( "Constantes", "rb" ) )
-K=Constantes[0];B=Constantes[1]
+#-------------------------------------------------------------------------------
+#-----------------LOAD DATA-----------------------------------------------------
+#-------------------------------------------------------------------------------
+inp = pickle.load(open("O","rb"))
+question= pickle.load(open("Q","rb"))
+out =  pickle.load(open("A","rb"))
+J = pickle.load(open("J","rb"))
 n_batch=np.shape(inp)[0]
 batch_size=np.shape(inp)[1]
 n_examples=np.shape(inp)[2]
-#inp_test = pickle.load( open( "positions_test", "rb" ) )
-#question_test= pickle.load( open( "question_test", "rb" ) )
-#out_test =  pickle.load( open( "positions_test", "rb" ) )
-
-#print(n_batch)
-#print(batch_size)
-#print(n_examples)
-#Z=K[0].reshape(500)
-#print(np.shape(K[0]))
-#print(np.shape(Z))
-#print(K[0][0])
-#print(Z[0])
+J=np.array(J).reshape(n_batch,batch_size,1)
+Q_shape=np.shape(question)
+Constantes =  pickle.load( open( "Constantes", "rb" ) )
+K=Constantes[0];B=Constantes[1]
+#print(Q_shape)
 #s.exit()
-#batch_size=np.shape(inp)
-#print(np.shape(question))
-#print(np.shape(out))
-#-----------------------------------------------------------------------
-
-#------------------ORGANIZE DATA-----------------------------------------------------
-#-----------------------------------------------------------------------
-#plt.plot(question[0][0].detach().numpy(),out[0][0].detach().numpy())
-#plt.show()
-#s.exit()
-train_loader = torch.utils.data.DataLoader(inp, batch_size=batch_size)
 #-------------------------------------------------------------------------------
 #------------------DEFINE O MODELO----------------------------------------------
 #-------------------------------------------------------------------------------
@@ -112,97 +102,128 @@ class Autoencoder(nn.Module):
         # N, 50
         super().__init__()
         self.encoder = nn.Sequential(
-            nn.Linear(50,400),
-            #nn.ELU(),
+            nn.Linear(n_examples,400),
+            nn.ELU(),
             #nn.ReLU(),
-            nn.Tanh(),
+            #nn.Tanh(),
             nn.Linear(400,300),
+            nn.ELU(),
             #nn.ReLU(),
-            #nn.ELU(),
-            nn.Tanh(),
+            #nn.Tanh(),
             nn.Linear(300,200),
-            #nn.ELU(),
+            nn.ELU(),
             #nn.ReLU(),
-            nn.Tanh(),
-            nn.Linear(200,3),
-            #nn.ELU(),
+            #nn.Tanh(),
+            nn.Linear(200,1),#> latent
+            nn.ELU(),
             #nn.ReLU(),
-            nn.Tanh(),
+            #nn.Tanh(),
             #nn.Linear(10,3),
             #nn.ELU(),
             #nn.ReLU(),
             #nn.Tanh(),
             #nn.Linear(25,10),
         )
-        self.project=nn.Linear(1,3)
+        self.project=nn.Linear(Q_shape[2],150)
         self.decoder=nn.Sequential(
             #nn.Tanh(),
             #nn.ReLU(),
-            nn.Linear(6,100),
-            #nn.ELU(),
-            nn.Tanh(),
+            nn.Linear(151,200),
+            nn.ELU(),
+            #nn.Tanh(),
             #nn.ReLU(),
-            nn.Linear(100,200),
-            #nn.ELU(),
+            nn.Linear(200,300),
+            nn.ELU(),
             #nn.ReLU(),
-            nn.Tanh(),
-            nn.Linear(200,450),
-            #nn.ELU(),
+            #nn.Tanh(),
+            nn.Linear(300,450),
+            nn.ELU(),
             #nn.ReLU(),
-            nn.Tanh(),
+            #nn.Tanh(),
             nn.Linear(450,50),
-            #nn.ELU(),
+            nn.ELU(),
             #nn.ReLU(),
-            nn.Tanh(),
+            #nn.Tanh(),
             nn.Linear(50,1),
             #nn.Tanh()
         )
     def forward(self, x, t):
         encoded = self.encoder(x)
         t=self.project(t)
+        #print(np.shape(t))
+        #print(np.shape(encoded))
         aux=torch.cat((encoded,t),1)
         #print(np.shape(aux))
         decoded = self.decoder(aux)
         return decoded,encoded
 #-------------------------------------------------------------------------------
-PATH='Estado_talvez_funcionante4.pt'  # esse aqui foi treinado por 10k epochs,
-                                      #3 Latent e 6 project of dataset(5,500,50)
-#PATH='Estado_talvez_funcionante4.pt'
-model=Autoencoder()
-#torch.save(state, filepath)
-model.load_state_dict(torch.load(PATH))
-#state = {
-#    'epoch': epoch,
-#    'state_dict': model.state_dict(),
-#    'optimizer': optimizer.state_dict(),
-#    ...
-#}
-#--------------------------------------------------------------------------
-#---------------------GRÁFICOS---------------------------------------------
-#--------------------------------------------------------------------------
-#--------------------------------------------------------------------------
-def Predict_test_Scynet():
-    t=torch.as_tensor(np.zeros((batch_size,1)))
-    t=t.float()
-    Y=np.zeros(50);        T=[i for i in range(0,50)]
-    for aux in range(0,n_batch):
-        for rdn_batch in range(0,batch_size):
-            YY=inp[aux][rdn_batch].detach().numpy()
-            r=0
-            for interval in range(0,49):
-                for i in range(batch_size):
-                    t[i][0]=question[0,i,r]
-                y,latent=model(inp[aux].float(),t)
-                y=y.detach().numpy()[rdn_batch]
-                Y[interval]=y
-                r+=1
-            plt.clf()
-            plt.xlim([0, 50])
-            plt.ylim([-1, 1])
-            plt.plot(T,Y,label='predict',ls='dashed')
-            plt.plot(T,YY,label='equation')
-            plt.legend()
-            plt.pause(0.03)
+#------------------CHAMA O MODELO E INICIA CAMADAS DE PESOS ORTOGONAIS----------
+#-------------------------------------------------------------------------------
+model = Autoencoder()
+for m in model.modules():
+    if isinstance(m, (nn.Conv2d, nn.Linear)):
+        nn.init.orthogonal_(m.weight)
+criterion = nn.MSELoss() #segundo a investigar
+optimizer = torch.optim.Adam(model.parameters())#,lr=1e-4,weight_decay = 1e-5)
+#optimizer = torch.optim.SGD(model.parameters(),lr=1e-4,weight_decay = 1e-5)#,momentum=0.5)
+#-------------------------------------------------------------------------------
+#------TREINO DO DECODER MODIFICADO--O[5]+Q[11] >> OUTPUT[1]--------------------
+#-------------------------------------------------------------------------------
+def treine(epochs):
+    inp = pickle.load( open( "O", "rb" ) )
+    question= pickle.load( open( "Q", "rb" ) )
+    out =  pickle.load( open( "A", "rb" ) )
+    n_batch=np.shape(inp)[0]
+    batch_size=np.shape(inp)[1]
+    n_examples=np.shape(inp)[2]
+    Q_shape=np.shape(question)
+    answ=torch.as_tensor(np.zeros((batch_size,1)))
+    indicedografico=0
+    for epoch in range(epochs):
+        for batch_idx in range(n_batch):
+            O=inp[batch_idx]
+            Q=question[batch_idx]
+            A=out[batch_idx]
+            O=O.float()
+            Q=Q.float()
+            A=A.float()
+            recon,latent = model(O,Q)
+            loss=torch.mean((recon-A)**2)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+        print(f'Epoch:{epoch+1},Loss:{loss.item():.4f}')
+#treine(1000)
+#print('end')
+#-------------------------------------------------------------------------------
+#--------------------- SALVANDO-------------------------------------------------
+#-------------------------------------------------------------------------------
+PATH_save='Estado_Box_2_Elu().pt'
+PATH_load='Estado_Box_2_Elu().pt'
+#torch.save(model.state_dict(), PATH_save)
+#s.exit()
+model.load_state_dict(torch.load(PATH_load))
+#torch.save(model.state_dict(), PATH_save)
+#-------------------------------------------------------------------------------
+#---------------------GRÁFICOS--------------------------------------------------
+#-------------------------------------------------------------------------------
+def Latent_values_Scynet():
+    for aux in range(1,n_batch):
+        O=inp[aux].float()
+        Q=question[aux].float()
+        A=out[aux].float()
+        j=J[aux]
+        print(np.shape(j)[0])
+        x=np.zeros(np.shape(j)[0])
+        y=np.zeros(np.shape(j)[0])
+        for batch_idx in range(0,batch_size):
+            recon,latent=model(O,Q)
+
+            print(np.shape(recon),np.shape(latent))
+            j
+            s.exit()
+#        plt.pause(5)
     plt.show()
-##Predict_test_Scynet()
-#sys.exit()
+Latent_values_Scynet()
+#s.exit()
+#-------------------------------------------------------------------------------
