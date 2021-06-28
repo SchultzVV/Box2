@@ -8,10 +8,11 @@ import torch.optim as optim
 import numpy as np;import sys as s
 import matplotlib.pyplot as plt
 import math
+
 #           GERANDO O BANCO DE DADOS
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-def Box_2_dataset_O(n_batch,batch_size,interval_size):
+def Box_2_dataset(n_batch,batch_size,interval_size):
     T=[i for i in range(0,interval_size)]
     O=[];    Q=[];    A=[];    J=[]
     v_min,v_max=5,40
@@ -77,7 +78,7 @@ def Box_2_dataset_O(n_batch,batch_size,interval_size):
     address = open("Q_train","wb");    pickle.dump(Q, address);    address.close()
     address = open("A_train","wb");    pickle.dump(A, address);    address.close()
     address = open("J_train","wb");    pickle.dump(J, address);    address.close()
-Box_2_dataset_O(5,500,5)
+Box_2_dataset(5,500,5)
 #s.exit()
 #-------------------------------------------------------------------------------
 #-----------------LOAD DATA-----------------------------------------------------
@@ -95,10 +96,7 @@ J       = pickle.load(open("J_train","rb"))
 n_batch=np.shape(inp)[0]
 batch_size=np.shape(inp)[1]
 n_examples=np.shape(inp)[2]
-J=np.array(J).reshape(n_batch,batch_size,1)
 Q_shape=np.shape(question)
-Constantes =  pickle.load( open( "Constantes", "rb" ) )
-K=Constantes[0];B=Constantes[1]
 #print(Q_shape)
 #s.exit()
 #-------------------------------------------------------------------------------
@@ -121,7 +119,7 @@ class Autoencoder(nn.Module):
             nn.ELU(),
             #nn.ReLU(),
             #nn.Tanh(),
-            nn.Linear(200,1),#> latent
+            nn.Linear(200,2),#> latent
             nn.ELU(),
             #nn.ReLU(),
             #nn.Tanh(),
@@ -135,7 +133,7 @@ class Autoencoder(nn.Module):
         self.decoder=nn.Sequential(
             #nn.Tanh(),
             #nn.ReLU(),
-            nn.Linear(151,200),
+            nn.Linear(152,200),
             nn.ELU(),
             #nn.Tanh(),
             #nn.ReLU(),
@@ -200,13 +198,13 @@ def treine(epochs):
             loss.backward()
             optimizer.step()
         print(f'Epoch:{epoch+1},Loss:{loss.item():.4f}')
-#treine(1000)
+#treine(200)
 #print('end')
 #-------------------------------------------------------------------------------
 #--------------------- SALVANDO-------------------------------------------------
 #-------------------------------------------------------------------------------
-PATH_save='Estado_Box_2_Elu().pt'
-PATH_load='Estado_Box_2_Elu().pt'
+#PATH_save='Estado_Box_2_with_two_latent.pt'
+PATH_load='Estado_Box_2_with_two_latent.pt'
 #torch.save(model.state_dict(), PATH_save)
 #s.exit()
 model.load_state_dict(torch.load(PATH_load))
@@ -215,46 +213,27 @@ model.load_state_dict(torch.load(PATH_load))
 #---------------------GRÁFICOS--------------------------------------------------
 #-------------------------------------------------------------------------------
 def Latent_values_Scynet():
-    for aux in range(1,n_batch):
+    for aux in range(n_batch):
         O=inp[aux].float()
         Q=question[aux].float()
         A=out[aux].float()
         j=J[aux]
         x=np.zeros(np.shape(j)[0])
-        y=np.zeros(np.shape(j)[0])
-        for i in range(0,batch_size):
-            recon,latent=model(O,Q)
-            for i in range(0,499):
-                x[i]=j[i]
-                y[i]=latent[i]
-            plt.scatter(x,y)
-            #plt.pause(0.5)
+        y1=np.zeros(np.shape(j)[0])
+        y2=np.zeros(np.shape(j)[0])
+        recon,latent=model(O,Q)
+        for i in range(0,499):
+            x[i]=j[i]
+            y1[i]=latent[i,0]
+            y2[i]=latent[i,1]
+        plt.scatter(x,y1,label='Latent Activation 1')
+        plt.scatter(x,y2,label='Latent Activation 2')
         plt.xlabel('Momento angular total')
         plt.ylabel('Latent Activation')
         plt.legend()
-        plt.show()
+        plt.pause(1.5)
+        plt.close()
 
-    s.exit()
-#Latent_values_Scynet()
-#s.exit()
-#-------------------------------------------------------------------------------
-def Latent_values_Scynet():
-    aux=2
-    O=inp[aux].float()
-    Q=question[aux].float()
-    A=out[aux].float()
-    j=J[aux]
-    print(min(j))
-    x=np.zeros(np.shape(j)[0])
-    y=np.zeros(np.shape(j)[0])
-    recon,latent=model(O,Q)
-    for i in range(0,499):
-        x[i]=j[i]
-        y[i]=latent[i]
-    plt.scatter(x,y)
-    plt.xlabel('Momento angular total')
-    plt.ylabel('Latent Activation')
-    plt.legend()
     plt.show()
 Latent_values_Scynet()
 #s.exit()

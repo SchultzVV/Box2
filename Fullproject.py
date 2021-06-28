@@ -76,7 +76,7 @@ def Box_2_dataset_O(n_batch,batch_size,interval_size):
     address = open("Q","wb");    pickle.dump(Q, address);    address.close()
     address = open("A","wb");    pickle.dump(A, address);    address.close()
     address = open("J","wb");    pickle.dump(J, address);    address.close()
-#Box_2_dataset_O(5,500,5)
+Box_2_dataset_O(5,500,5)
 #s.exit()
 #-------------------------------------------------------------------------------
 #-----------------LOAD DATA-----------------------------------------------------
@@ -88,11 +88,7 @@ J = pickle.load(open("J","rb"))
 n_batch=np.shape(inp)[0]
 batch_size=np.shape(inp)[1]
 n_examples=np.shape(inp)[2]
-J=np.array(J).reshape(n_batch,batch_size,1)
 Q_shape=np.shape(question)
-Constantes =  pickle.load( open( "Constantes", "rb" ) )
-K=Constantes[0];B=Constantes[1]
-#print(Q_shape)
 #s.exit()
 #-------------------------------------------------------------------------------
 #------------------DEFINE O MODELO----------------------------------------------
@@ -176,9 +172,6 @@ def treine(epochs):
     n_batch=np.shape(inp)[0]
     batch_size=np.shape(inp)[1]
     n_examples=np.shape(inp)[2]
-    Q_shape=np.shape(question)
-    answ=torch.as_tensor(np.zeros((batch_size,1)))
-    indicedografico=0
     for epoch in range(epochs):
         for batch_idx in range(n_batch):
             O=inp[batch_idx]
@@ -208,22 +201,26 @@ model.load_state_dict(torch.load(PATH_load))
 #---------------------GRÁFICOS--------------------------------------------------
 #-------------------------------------------------------------------------------
 def Latent_values_Scynet():
-    for aux in range(1,n_batch):
+    aux=2
+    for aux in range(n_batch):
         O=inp[aux].float()
         Q=question[aux].float()
         A=out[aux].float()
         j=J[aux]
-        print(np.shape(j)[0])
+        print(min(j))
         x=np.zeros(np.shape(j)[0])
         y=np.zeros(np.shape(j)[0])
-        for batch_idx in range(0,batch_size):
-            recon,latent=model(O,Q)
-
-            print(np.shape(recon),np.shape(latent))
-            j
-            s.exit()
-#        plt.pause(5)
+        recon,latent=model(O,Q)
+        for i in range(0,499):
+            x[i]=j[i]
+            y[i]=latent[i]
+        plt.scatter(x,y)
+        plt.xlabel('Momento angular total')
+        plt.ylabel('Latent Activation')
+        plt.legend()
+        plt.pause(1)
     plt.show()
+
 Latent_values_Scynet()
 #s.exit()
 #-------------------------------------------------------------------------------
